@@ -27,6 +27,15 @@ class CheckOrcaCommandTest(unittest.TestCase):
             ('orca orchestration worker-start --agent claude --spec "line1\nline2"',),
             ("orca \\\n  agent launch --agent claude",),
             ("orca orchestration \\\n  worker-start --agent claude",),
+            ('orca orchestration worker-start --agent claude --spec "Fix the cout << x bug\nin src/main.cpp"',),
+            ('orca orchestration worker-start --agent claude --spec "Resolve the <<<<<<< HEAD markers\nin a.py"',),
+            ('orca orchestration worker-start --agent claude --spec "Use a <<EOF heredoc\nfor input"',),
+            ('jq . <<< "$x"\norca agent launch --agent claude',),
+            ("cat <<EOF \\\n  && orca agent launch --agent claude\nbody\nEOF",),
+            ("& $Env:ORCA_CLI_COMMAND agent launch --agent claude", "powershell"),
+            ("& $ENV:ORCA_CLI_COMMAND agent launch --agent claude", "powershell"),
+            ('& "${env:ORCA_CLI_COMMAND}" agent launch --agent claude', "powershell"),
+            ("& $env:ORCA_CLI_COMMAND orchestration worker-start --agent claude `\n  --spec x", "powershell"),
         ]
         for case in cases:
             with self.subTest(case=case):
@@ -46,11 +55,16 @@ class CheckOrcaCommandTest(unittest.TestCase):
             "cat <<'EOF' > notes.md\norca agent launch --agent claude\nEOF",
             "cat <<-EOF\n\torca agent launch --agent claude\n\tEOF",
             "orca orchestration status",
+            'git commit -m "$(cat <<\'EOF\'\nmsg\norca agent launch --agent claude\nEOF\n)"',
             "orca agent launch --agent claude 'unterminated",
         ]
         for cmd in cases:
             with self.subTest(cmd=cmd):
                 self.assertFalse(refused(cmd))
+
+    def test_powershell_backtick_continuation_allowed(self):
+        cmd = "& $env:ORCA_CLI_COMMAND orchestration worker-start --agent claude `\n  --model sonnet --spec x"
+        self.assertFalse(refused(cmd, "powershell"))
 
     def test_refusal_text(self):
         result = check_orca_command("orca agent launch --agent claude", "bash", {})

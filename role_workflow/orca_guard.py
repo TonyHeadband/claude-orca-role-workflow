@@ -8,7 +8,8 @@ from .messages import orca_refusal
 _HEREDOC = re.compile(r"<<(?!<)(-?)\s*(?:'([^']+)'|\"([^\"]+)\"|([^\s;&|()<>'\"]+))")
 _ASSIGNMENT = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=")
 _PREFIXES = {"&", "command", "exec", "env"}
-_LITERAL_ORCA = {"$ORCA_CLI_COMMAND", "${ORCA_CLI_COMMAND}", "$env:ORCA_CLI_COMMAND"}
+_LITERAL_ORCA = {"$ORCA_CLI_COMMAND", "${ORCA_CLI_COMMAND}"}
+_POWERSHELL_ORCA = {"$env:orca_cli_command", "${env:orca_cli_command}"}
 _ORCA_NAMES = {"orca", "orca-ide", "orca-dev"}
 _LAUNCH_FORMS = {
     ("orchestration", "worker-start"),
@@ -18,35 +19,38 @@ _LAUNCH_FORMS = {
 _SEPARATORS = ";&|()\n"
 
 
-def _strip_heredocs(command: str) -> str:
-    kept: list[str] = []
-    delimiter = None
-    strip_tabs = False
-    for line in command.split("\n"):
-        if delimiter is not None:
-            body = line.lstrip("\t") if strip_tabs else line
-            if body == delimiter:
-                delimiter = None
-            continue
-        kept.append(line)
-        match = _HEREDOC.search(line)
-        if match:
-            strip_tabs = match.group(1) == "-"
-            delimiter = match.group(2) or match.group(3) or match.group(4)
-    return "\n".join(kept)
+def _skip_heredoc_bodies(text: str, start: int, pending: list[tuple[bool, str]]) -> int:
+    """Return the index just past the delimiter lines of each pending heredoc, starting at `start`."""
+    for strip_tabs, delimiter in pending:
+        while start < len(text):
+            end = text.find("\n", start)
+            end = len(text) if end == -1 else end
+            line = text[start:end]
+            start = min(end + 1, len(text))
+            if (line.lstrip("\t") if strip_tabs else line) == delimiter:
+                break
+    return start
 
 
-def _split_commands(command: str) -> list[str]:
-    """Split on shell separators, treating newlines as separators only outside quotes."""
-    text = _strip_heredocs(command)
+def _split_commands(command: str, shell: str = "bash") -> list[str]:
+    """Split on shell separators, treating newlines as separators only outside quotes.
+
+    Heredoc bodies are skipped: they are data, not commands.
+    """
+    text = command
     commands: list[str] = []
     current: list[str] = []
+    pending: list[tuple[bool, str]] = []
     quote = None
+    arith = 0  # paren depth inside $(( ... )), where << is a shift operator
     i = 0
     while i < len(text):
         ch = text[i]
         if ch == "\\" and quote != "'" and text[i + 1:i + 2] == "\n":
             i += 2  # bash line continuation: backslash-newline vanishes
+            continue
+        if ch == "`" and shell == "powershell" and quote != "'" and text[i + 1:i + 2] == "\n":
+            i += 2  # PowerShell line continuation
             continue
         if quote:
             current.append(ch)
@@ -62,9 +66,26 @@ def _split_commands(command: str) -> list[str]:
             current.append(ch)
             i += 1
             current.append(text[i])
+        elif text.startswith("$((", i):
+            arith = 2
+            current.append("$((")
+            i += 2
+        elif arith and ch in "()":
+            arith += 1 if ch == "(" else -1
+            current.append(ch)
+        elif ch == "<" and text.startswith("<<<", i):
+            current.append("<<<")
+            i += 2
+        elif ch == "<" and not arith and (match := _HEREDOC.match(text, i)):
+            pending.append((match.group(1) == "-", match.group(2) or match.group(3) or match.group(4)))
+            current.append(match.group(0))
+            i = match.end() - 1
         elif ch in _SEPARATORS:
             commands.append("".join(current))
             current = []
+            if ch == "\n" and pending:
+                i = _skip_heredoc_bodies(text, i + 1, pending) - 1
+                pending = []
         else:
             current.append(ch)
         i += 1
@@ -73,7 +94,7 @@ def _split_commands(command: str) -> list[str]:
 
 
 def _is_orca(token: str, env: Mapping[str, str]) -> bool:
-    if token in _LITERAL_ORCA:
+    if token in _LITERAL_ORCA or token.lower() in _POWERSHELL_ORCA:
         return True
     configured = env.get("ORCA_CLI_COMMAND")
     if configured and token == configured:
@@ -131,7 +152,7 @@ def check_orca_command(
     try:
         if shell == "powershell":
             command = command.replace("\\", "/")
-        for simple in _split_commands(command):
+        for simple in _split_commands(command, shell):
             lexer = shlex.shlex(simple, posix=True, punctuation_chars=True)
             lexer.whitespace_split = True
             form = _launch_form(list(lexer), env)

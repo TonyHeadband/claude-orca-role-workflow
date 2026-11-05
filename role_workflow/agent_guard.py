@@ -17,7 +17,11 @@ def check_agent_call(
     subagent_type = raw_type if isinstance(raw_type, str) and raw_type else None
     if subagent_type == "fork":
         return None
-    if _explicit(tool_input.get("model")):
+    model = tool_input.get("model")
+    # A call-level model overrides the definition, so "inherit" here runs on the parent's model.
+    if isinstance(model, str) and model.strip().lower() == "inherit":
+        return Refusal(agent_refusal(subagent_type))
+    if _explicit(model):
         return None
     if _explicit(find_agent_model(subagent_type or "general-purpose", cwd, config_dir, plugin_root)):
         return None

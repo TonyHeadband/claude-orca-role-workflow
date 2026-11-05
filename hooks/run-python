@@ -20,4 +20,7 @@ case "$0" in
 esac
 # Running from the plugin root keeps a project's files from shadowing the module.
 cd "${SCRIPT_DIR}/.." || exit 0
-exec "$PY" -m role_workflow "$@"
+# PYTHONSAFEPATH would drop the cwd from sys.path and hide the module; -B avoids writing
+# __pycache__ into the plugin directory.
+unset PYTHONSAFEPATH
+exec "$PY" -B -m role_workflow "$@"

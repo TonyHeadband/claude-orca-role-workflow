@@ -29,6 +29,8 @@ class CheckAgentCallTest(unittest.TestCase):
             {"subagent_type": "general-purpose", "model": "inherit"},
             {"subagent_type": "general-purpose", "model": "INHERIT"},
             {"subagent_type": "x"},
+            {"subagent_type": "role-workflow:reviewer", "model": "inherit"},
+            {"subagent_type": "role-workflow:reviewer", "model": "INHERIT"},
             {"subagent_type": "general-purpose", "model": ""},
             {"subagent_type": "general-purpose", "model": 5},
             {"subagent_type": ["a"], "model": None},

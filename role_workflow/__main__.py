@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import sys
@@ -70,5 +71,12 @@ def main(argv: list[str], stdin: TextIO, stdout: TextIO, environ: Mapping[str, s
     return 0
 
 
+def _entry() -> int:
+    # Windows decodes piped stdin as the ANSI code page, but Claude Code sends UTF-8.
+    stdin = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", errors="replace")
+    stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", write_through=True)
+    return main(sys.argv[1:], stdin, stdout, os.environ)
+
+
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:], sys.stdin, sys.stdout, os.environ))
+    sys.exit(_entry())

@@ -25,6 +25,8 @@ class CheckOrcaCommandTest(unittest.TestCase):
              {"ORCA_CLI_COMMAND": "/opt/orca/bin/orca-cli"}),
             ("echo ok\norca agent launch --agent claude",),
             ('orca orchestration worker-start --agent claude --spec "line1\nline2"',),
+            ("orca \\\n  agent launch --agent claude",),
+            ("orca orchestration \\\n  worker-start --agent claude",),
         ]
         for case in cases:
             with self.subTest(case=case):

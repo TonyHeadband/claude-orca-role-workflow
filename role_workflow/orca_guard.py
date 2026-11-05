@@ -45,6 +45,9 @@ def _split_commands(command: str) -> list[str]:
     i = 0
     while i < len(text):
         ch = text[i]
+        if ch == "\\" and quote != "'" and text[i + 1:i + 2] == "\n":
+            i += 2  # bash line continuation: backslash-newline vanishes
+            continue
         if quote:
             current.append(ch)
             if ch == "\\" and quote == '"' and i + 1 < len(text):

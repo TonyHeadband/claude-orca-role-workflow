@@ -49,6 +49,22 @@ class DoctorTest(unittest.TestCase):
         self.assertEqual(agents.status, "FAIL")
         self.assertIn("delete", agents.fix)
 
+    def broken_plugin(self, matcher):
+        root = self.dir / "plugin"
+        (root / "hooks").mkdir(parents=True)
+        data = json.loads((PLUGIN_ROOT / "hooks" / "hooks.json").read_text())
+        data["hooks"]["PreToolUse"] = [e for e in data["hooks"]["PreToolUse"] if e["matcher"] != matcher]
+        (root / "hooks" / "hooks.json").write_text(json.dumps(data))
+        return root
+
+    def test_missing_orca_matcher_fails_without_orca(self):
+        checks = run_checks(self.broken_plugin("Bash|PowerShell"), self.dir, self.config, {}, good_hook)
+        self.assertEqual(checks[0].status, "FAIL")
+
+    def test_missing_agent_matcher_fails(self):
+        checks = run_checks(self.broken_plugin("Agent|Task"), self.dir, self.config, ORCA_ENV, good_hook)
+        self.assertEqual(checks[1].status, "FAIL")
+
     def test_hook_not_refusing(self):
         checks = self.checks(hook=lambda s, i: (0, ""))
         self.assertEqual(checks[1].status, "FAIL")
@@ -77,5 +93,5 @@ class DoctorTest(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "posix", "needs bash")
     def test_real_launcher(self):
-        checks = run_checks(PLUGIN_ROOT, self.dir, self.config, {**os.environ, **ORCA_ENV})
+        checks = run_checks(PLUGIN_ROOT, self.dir, self.config, {**os.environ, **ORCA_ENV, "CLAUDE_CONFIG_DIR": str(self.config)})
         self.assertEqual([checks[i].status for i in (0, 1, 3)], ["OK"] * 3)

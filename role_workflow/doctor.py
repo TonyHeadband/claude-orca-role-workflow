@@ -68,10 +68,10 @@ def _no_python(name: str) -> Check:
 
 def _orca_check(plugin_root: Path, environ: Mapping[str, str], run_hook: RunHook) -> Check:
     name = "Orca hook"
-    if not environ.get("ORCA_CLI_COMMAND"):
-        return Check("N/A", name, "Orca not detected (ORCA_CLI_COMMAND unset); guard idle")
     if not _has_matcher(plugin_root, "Bash|PowerShell"):
         return Check("FAIL", name, "hooks.json lacks the Bash|PowerShell matcher", "reinstall the role-workflow plugin")
+    if not environ.get("ORCA_CLI_COMMAND"):
+        return Check("N/A", name, "Orca not detected (ORCA_CLI_COMMAND unset); guard idle")
     bare_rc, bare = run_hook("orca-guard", _bash(LAUNCH))
     if bare_rc == 1:
         return _no_python(name)

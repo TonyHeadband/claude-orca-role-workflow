@@ -81,9 +81,8 @@ class CliTest(unittest.TestCase):
             with self.subTest(tool_input=tool_input):
                 self.assertEqual(run(["agent-guard"], payload, {"CLAUDE_CONFIG_DIR": self.tmp}), (0, ""))
 
-    def test_unknown_subcommand_and_doctor(self):
+    def test_unknown_subcommand(self):
         self.assertEqual(run(["bogus"], "")[1], "")
-        self.assertEqual(run(["doctor"], "")[0], 2)
 
     def test_session_guidance(self):
         rc, out = run(["session-guidance"], "")

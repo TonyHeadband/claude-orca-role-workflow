@@ -37,14 +37,22 @@ def _emit(stdout: TextIO, output: dict) -> None:
     stdout.write(json.dumps(output))
 
 
+def _doctor(args: list[str], stdout: TextIO, environ: Mapping[str, str]) -> int:
+    from role_workflow.doctor import format_report, run_checks
+
+    cwd = Path(args[args.index("--cwd") + 1]) if "--cwd" in args[:-1] else Path.cwd()
+    checks = run_checks(PLUGIN_ROOT, cwd, config_dir(environ), environ)
+    stdout.write(format_report(checks) + "\n")
+    return 1 if any(c.status == "FAIL" for c in checks) else 0
+
+
 def main(argv: list[str], stdin: TextIO, stdout: TextIO, environ: Mapping[str, str]) -> int:
     command = argv[0] if argv else ""
     if command == "session-guidance":
         _emit(stdout, {"hookSpecificOutput": {"hookEventName": "SessionStart", "additionalContext": GUIDANCE}})
         return 0
     if command == "doctor":
-        print("not implemented", file=stdout)
-        return 2
+        return _doctor(argv[1:], stdout, environ)
     guard = GUARDS.get(command)
     if guard is None:
         return 0

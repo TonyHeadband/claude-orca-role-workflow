@@ -1,0 +1,16 @@
+{
+  "name": "role-workflow",
+  "version": "0.1.0",
+  "description": "Keeps each kind of work on the right model: implementer and reviewer agents, plus guards that refuse subagent calls and Orca launches without an explicit model.",
+  "author": {
+    "name": "Tony Headband"
+  },
+  "license": "MIT",
+  "keywords": [
+    "models",
+    "subagents",
+    "orca",
+    "hooks",
+    "workflow"
+  ]
+}

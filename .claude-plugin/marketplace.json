@@ -1,0 +1,28 @@
+{
+  "name": "claude-orca-role-workflow",
+  "owner": {
+    "name": "Tony Headband"
+  },
+  "plugins": [
+    {
+      "name": "role-workflow",
+      "source": "./",
+      "description": "Model-per-role workflow: implementer and reviewer agents with guards against inherited models.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Tony Headband"
+      },
+      "keywords": [
+        "models",
+        "subagents",
+        "orca",
+        "hooks",
+        "workflow"
+      ]
+    }
+  ],
+  "metadata": {
+    "description": "Model-per-role workflow plugin for Claude Code and Orca.",
+    "version": "0.1.0"
+  }
+}

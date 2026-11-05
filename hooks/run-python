@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Runs `python -m role_workflow <args>` from the plugin root. Skips interpreters
+# older than 3.10, including the Windows Store stub that exits non-zero.
+PY=""
+for c in python3 python; do
+  if "$c" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' >/dev/null 2>&1; then
+    PY="$c"
+    break
+  fi
+done
+if [ -z "$PY" ]; then
+  echo "role-workflow: Python 3.10+ not found on PATH; hooks are inactive" >&2
+  exit 1
+fi
+
+# Split $0 on its last / or \ instead of calling dirname (see run-hook.cmd).
+case "$0" in
+  */*|*\\*) SCRIPT_DIR="$(cd "${0%[/\\]*}" && pwd)" ;;
+  *) SCRIPT_DIR="$(pwd)" ;;
+esac
+# Running from the plugin root keeps a project's files from shadowing the module.
+cd "${SCRIPT_DIR}/.." || exit 0
+exec "$PY" -m role_workflow "$@"

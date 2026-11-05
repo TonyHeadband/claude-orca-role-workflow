@@ -96,6 +96,12 @@ This is for the author, who already had `implementer.md` and `reviewer.md` in th
 /plugin uninstall role-workflow@claude-orca-role-workflow
 ```
 
+To remove the marketplace as well:
+
+```
+/plugin marketplace remove claude-orca-role-workflow
+```
+
 The plugin writes no files of its own, so nothing is left behind.
 
 ## Development
@@ -103,8 +109,10 @@ The plugin writes no files of its own, so nothing is left behind.
 Run the tests from the repo root. They use only the standard library:
 
 ```
-python -m unittest
+python3 -m unittest discover -s tests -t .
 ```
+
+On Windows, use `python` instead of `python3`.
 
 To try the plugin without installing it:
 

@@ -16,7 +16,7 @@ It does this with four parts:
 
 1. **Orca launch guard (hard).** Refuses an Orca command that starts a Claude agent with no `--model`.
 2. **Agent guard (hard).** Refuses a subagent call that has no explicit model.
-3. **Role agents (hard for those roles).** `implementer` runs on Sonnet. `reviewer` runs on Opus and is read-only. Calling them gets the right model with no extra flag.
+3. **Role agents (hard for those roles).** `role-workflow:implementer` runs on Sonnet. `role-workflow:reviewer` runs on Opus and is read-only. Calling them gets the right model with no extra flag. Plugin agents carry the `role-workflow:` prefix, so call them by the full name.
 4. **Session guidance (soft).** At session start, a short note tells Claude which role to use for which step, and why. It is re-sent after `/clear` and after compaction.
 
 Every refusal explains why in a sentence, so the structure is easy to learn from the tool itself.
@@ -70,7 +70,7 @@ For the `Agent` tool (subagents inside a session):
 | Call | Result |
 | --- | --- |
 | Sets `model` | Allowed |
-| `subagent_type` is an agent whose definition sets `model` (`implementer`, `reviewer`, or your own) | Allowed |
+| `subagent_type` is an agent whose definition sets `model` (`role-workflow:implementer`, `role-workflow:reviewer`, or your own) | Allowed |
 | `subagent_type: "fork"` | Allowed. A fork runs on the parent's model and is the coordinator doing its own work. |
 | No `subagent_type`, or `general-purpose` | Refused |
 | Any other agent with no model in its definition and none on the call (including built-ins like `Explore` and `Plan`) | Refused |
@@ -82,7 +82,7 @@ When refused, Claude is told to use `role-workflow:implementer` for building, `r
 
 ### Explicit, not role-checked
 
-The rule is "the model is explicit", not "the model is right for the role". A `reviewer` call with `model: sonnet` is allowed on purpose.
+The rule is "the model is explicit", not "the model is right for the role". A `role-workflow:reviewer` call with `model: sonnet` is allowed on purpose.
 
 The reason: in Orca a worker launch carries no role, so the Orca guard can only check that a model is present. The Agent guard follows the same rule, so Claude Code and Orca behave the same way. The session guidance tells Claude not to override a role agent's model. If a role check for Orca workers becomes possible, both hosts can be tightened together.
 

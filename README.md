@@ -28,12 +28,12 @@ Every refusal explains why in a sentence, so the structure is easy to learn from
 In Claude Code:
 
 ```
-/plugin marketplace add <owner>/claude-orca-role-workflow
+/plugin marketplace add TonyHeadband/claude-orca-role-workflow
 /plugin install role-workflow@claude-orca-role-workflow
 /hierarchy-doctor
 ```
 
-`<owner>` is the GitHub account that hosts this repo. The doctor prints one line per check and a fix for each failure.
+The doctor prints one line per check and a fix for each failure.
 
 ## Requirements
 

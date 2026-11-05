@@ -4,7 +4,7 @@ Status: idea, not started · 2026-11-04
 
 ## Why
 
-Multi-agent work (Orca workers, subagents) currently picks models by accident. On 2026-11-04, every Orca build worker for part D of rpg-house-party ran on **Opus at high effort**, because that was Orca's default for new Claude chats. That burned 57% of a 5-hour usage window in about 3 hours. The goal is a role hierarchy that holds by configuration, not by the coordinator remembering a flag:
+Multi-agent work (Orca workers, subagents) currently picks models by accident. On 2026-11-04, every Orca build worker for one project ran on **Opus at high effort**, because that was Orca's default for new Claude chats. That burned 57% of a 5-hour usage window in about 3 hours. The goal is a role hierarchy that holds by configuration, not by the coordinator remembering a flag:
 
 - **Opus** for brainstorming, specs, plans and coordination (the chats the user opens).
 - **Sonnet** for implementation (Orca workers and in-session builders).
@@ -12,7 +12,7 @@ Multi-agent work (Orca workers, subagents) currently picks models by accident. O
 
 ## What it is
 
-A Claude Code plugin, in its own Forgejo repo with a marketplace entry, that sets up the four layers in one install and removes them in one uninstall:
+A Claude Code plugin, in its own repo with a marketplace entry, that sets up the four layers in one install and removes them in one uninstall:
 
 | Layer | Plugin piece | Strength |
 |---|---|---|
@@ -31,7 +31,7 @@ A Claude Code plugin, in its own Forgejo repo with a marketplace entry, that set
 
 ## Decisions for the brainstorm
 
-- Name and repo location (Forgejo, under the user's account); marketplace setup.
+- Name and repo location; marketplace setup.
 - Should the hook only block, or should it rewrite the command to add `--model sonnet` (newer `PreToolUse` supports `updatedInput`)? Can it tell builder launches from review launches (task title or spec text), or should it stay "must be explicit"?
 - Should it also block untyped or `general-purpose` subagent calls (`PreToolUse` on the Agent tool)? That was 93% of a week's subagent usage.
 - How skills that choose their own subagent models (superpowers' subagent-driven-development) are steered to `implementer`/`reviewer`: the injected text, or a hook.
